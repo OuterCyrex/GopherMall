@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
+	"strings"
+	"time"
 
 	proto "GopherMall/user_srv/proto/.UserProto"
 )
@@ -112,11 +114,54 @@ func (s *UserServer) CreateUser(ctx context.Context, request *proto.CreateUserIn
 		KeyLen:       32,
 		HashFunction: sha256.New,
 	})
-	newPassword := fmt.Sprintf("$pbkdf2-sha512$%s$%s", salt, encodedPwd)
 
 	user := model.User{
 		Mobile:   request.Mobile,
-		Password: newPassword,
+		Password: fmt.Sprintf("$pbkdf2-sha512$%s$%s", salt, encodedPwd),
 		NickName: request.GetNickName(),
 	}
+
+	result := global.DB.Create(&user)
+	if result.Error != nil {
+		return nil, status.Errorf(codes.Internal, "Create User Failed: %v", result.Error)
+	}
+
+	userInfoResp := ModelUserToResponse(user)
+	return &userInfoResp, nil
+}
+
+func (s *UserServer) UpdateUser(ctx context.Context, request *proto.UpdateUserInfo) (*proto.Empty, error) {
+	_, err := global.FindById(request.GetId())
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Errorf(codes.NotFound, "No Such User, Id: %d", request.GetId())
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Find User By Id in UpdateUser Failed: %v", err)
+	}
+
+	birthDay := time.Unix(int64(request.GetBirthDay()), 0)
+	user := model.User{
+		NickName: request.GetNickName(),
+		Birthday: &birthDay,
+		Gender:   request.GetGender(),
+	}
+
+	result := global.DB.Save(&user)
+	if result.Error != nil {
+		return nil, status.Errorf(codes.Internal, "Update User Failed: %v", result.Error)
+	}
+
+	return &proto.Empty{}, nil
+}
+
+func (s *UserServer) CheckPasswordInfo(ctx context.Context, request *proto.PasswordCheck) (*proto.CheckResponse, error) {
+	passwordInfo := strings.Split(request.GetEncryptedPassword(), "$")
+	check := password.Verify(request.GetPassword(), passwordInfo[2], passwordInfo[3], &password.Options{
+		SaltLen:      16,
+		Iterations:   100,
+		KeyLen:       32,
+		HashFunction: sha256.New,
+	})
+
+	return &proto.CheckResponse{Success: check}, nil
 }
