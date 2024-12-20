@@ -133,7 +133,7 @@ func (s *UserServer) CreateUser(ctx context.Context, request *proto.CreateUserIn
 }
 
 func (s *UserServer) UpdateUser(ctx context.Context, request *proto.UpdateUserInfo) (*proto.Empty, error) {
-	_, err := global.FindById(request.GetId())
+	user, err := global.FindById(request.GetId())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "No Such User, Id: %d", request.GetId())
 	}
@@ -142,11 +142,9 @@ func (s *UserServer) UpdateUser(ctx context.Context, request *proto.UpdateUserIn
 	}
 
 	birthDay := time.Unix(int64(request.GetBirthDay()), 0)
-	user := model.User{
-		NickName: request.GetNickName(),
-		Birthday: &birthDay,
-		Gender:   request.GetGender(),
-	}
+	user.NickName = request.GetNickName()
+	user.Birthday = &birthDay
+	user.Gender = request.GetGender()
 
 	result := global.DB.Save(&user)
 	if result.Error != nil {
