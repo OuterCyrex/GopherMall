@@ -17,7 +17,9 @@ import (
 	proto "GopherMall/user_srv/proto/.UserProto"
 )
 
-type UserServer struct{}
+type UserServer struct {
+	proto.UnimplementedUserServer
+}
 
 func ModelUserToResponse(user model.User) proto.UserInfoResponse {
 	var birthday uint64
@@ -78,7 +80,7 @@ func (s *UserServer) GetUserList(ctx context.Context, req *proto.PageInfo) (*pro
 	}, nil
 }
 
-func (s *UserServer) GetUserByMobile(ctx *context.Context, request *proto.MobileRequest) (*proto.UserInfoResponse, error) {
+func (s *UserServer) GetUserByMobile(ctx context.Context, request *proto.MobileRequest) (*proto.UserInfoResponse, error) {
 	user, err := global.FindByMobile(request.GetMobile())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "No Such User, Mobile: %s", request.GetMobile())
