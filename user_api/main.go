@@ -1,4 +1,19 @@
-package user_api
+package main
+
+import (
+	"GopherMall/user_api/initialize"
+	"fmt"
+	"go.uber.org/zap"
+)
 
 func main() {
+	initialize.InitLogger()
+	R := initialize.Routers()
+	Port := 8080
+
+	zap.S().Debugf("server start... port: %d", Port)
+
+	if err := R.Run(fmt.Sprintf(":%d", Port)); err != nil {
+		zap.S().Panicf("server start failed : %v", err)
+	}
 }
