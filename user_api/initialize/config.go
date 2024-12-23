@@ -1,7 +1,7 @@
 package initialize
 
 import (
-	"GopherMall/user_api/config"
+	"GopherMall/user_api/global"
 	"fmt"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -20,8 +20,9 @@ func InitConfig(isDebug bool) {
 		zap.S().Panicw("Viper Read YAMLFile failed")
 	}
 
-	serverConfig := config.MainConfig{}
-	if err := v.Unmarshal(&serverConfig); err != nil {
+	if err := v.Unmarshal(&global.ServerConfig); err != nil {
 		zap.S().Panicw("Viper UnMarshal YAMLFile failed")
 	}
+
+	zap.S().Debugf("Server Config: %v", global.ServerConfig)
 }

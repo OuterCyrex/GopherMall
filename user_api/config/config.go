@@ -2,7 +2,7 @@ package config
 
 type UserSrvConfig struct {
 	Host string `mapstructure:"host"`
-	Port string `mapstructure:"port"`
+	Port int    `mapstructure:"port"`
 }
 
 type MainConfig struct {

@@ -8,7 +8,9 @@ import (
 
 func main() {
 	initialize.InitLogger()
+	initialize.InitConfig(true)
 	R := initialize.Routers()
+
 	Port := 8080
 
 	zap.S().Debugf("server start... port: %d", Port)

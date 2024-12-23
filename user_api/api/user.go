@@ -1,6 +1,7 @@
 package api
 
 import (
+	"GopherMall/user_api/global"
 	"GopherMall/user_api/global/response"
 	proto "GopherMall/user_srv/proto/.UserProto"
 	"context"
@@ -46,10 +47,11 @@ func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 }
 
 func GetUserList(c *gin.Context) {
-	ip := "127.0.0.1"
-	port := 50051
 	userConn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", ip, port),
+		fmt.Sprintf("%s:%d",
+			global.ServerConfig.UserSrvConfig.Host,
+			global.ServerConfig.UserSrvConfig.Port,
+		),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
