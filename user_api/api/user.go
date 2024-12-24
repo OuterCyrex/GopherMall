@@ -29,7 +29,7 @@ func removeTopStruct(fields map[string]string) map[string]string {
 	return resp
 }
 
-func HandlerValidatorError(err error, c *gin.Context) {
+func HandleValidatorError(err error, c *gin.Context) {
 	var errs validator.ValidationErrors
 	ok := errors.As(err, &errs)
 	if !ok {
@@ -120,7 +120,57 @@ func GetUserList(c *gin.Context) {
 func PasswordLogin(c *gin.Context) {
 	passwordLoginForm := forms.PasswordLoginForm{}
 	if err := c.ShouldBindJSON(&passwordLoginForm); err != nil {
-		HandlerValidatorError(err, c)
+		HandleValidatorError(err, c)
 		return
 	}
+
+	userConn, err := grpc.NewClient(
+		fmt.Sprintf("%s:%d",
+			global.ServerConfig.UserSrvConfig.Host,
+			global.ServerConfig.UserSrvConfig.Port,
+		),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		zap.S().Errorw(fmt.Sprintf("[PwdLogin] Connect to Grpc Server Failed"),
+			"msg",
+			err.Error(),
+		)
+	}
+
+	userSrvClient := proto.NewUserClient(userConn)
+
+	userInfoResp, err := userSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
+		Mobile: passwordLoginForm.Mobile,
+	})
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			switch e.Code() {
+			case codes.NotFound:
+				c.JSON(http.StatusNotFound, gin.H{
+					"msg": "电话 " + passwordLoginForm.Mobile + " 尚未注册",
+				})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"msg": "登陆失败",
+				})
+			}
+		}
+		zap.S().Errorw("[PwdLogin] Get User By Mobile Failed")
+		return
+	} else {
+		if passwordValid, _ := userSrvClient.CheckPasswordInfo(context.Background(), &proto.PasswordCheck{
+			Password:          passwordLoginForm.Password,
+			EncryptedPassword: userInfoResp.GetPassword(),
+		}); passwordValid == nil || !passwordValid.Success {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"msg": "密码错误",
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"msg": "登陆成功",
+			})
+		}
+	}
+
 }

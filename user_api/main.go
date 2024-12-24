@@ -13,6 +13,7 @@ func main() {
 	if err != nil {
 		zap.S().Panicf("init trans failed: %v", zap.Error(err))
 	}
+
 	R := initialize.Routers()
 
 	Port := 8080

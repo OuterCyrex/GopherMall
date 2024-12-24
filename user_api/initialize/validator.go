@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"GopherMall/user_api/global"
+	selfValidator "GopherMall/user_api/validator"
 	"fmt"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -14,7 +15,8 @@ import (
 	"strings"
 )
 
-func InitTrans(locale string) (err error) {
+func InitTrans(locale string) error {
+	var err error
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 			name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
@@ -41,7 +43,17 @@ func InitTrans(locale string) (err error) {
 		default:
 			err = en_translations.RegisterDefaultTranslations(v, global.Trans)
 		}
-		return
 	}
-	return
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("mobile", selfValidator.ValidateMobile)
+		_ = v.RegisterTranslation("mobile", global.Trans, func(ut ut.Translator) error {
+			return ut.Add("mobile", "{0} 非法的手机号码", true)
+		}, func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("mobile", fe.Field())
+			return t
+		})
+	}
+
+	return err
 }
