@@ -1,12 +1,15 @@
 package api
 
 import (
+	"GopherMall/user_api/forms"
 	"GopherMall/user_api/global"
 	"GopherMall/user_api/global/response"
 	proto "GopherMall/user_srv/proto/.UserProto"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,8 +17,30 @@ import (
 	"google.golang.org/grpc/status"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
+
+func removeTopStruct(fields map[string]string) map[string]string {
+	resp := map[string]string{}
+	for field, err := range fields {
+		resp[field[strings.Index(field, ".")+1:]] = err
+	}
+	return resp
+}
+
+func HandlerValidatorError(err error, c *gin.Context) {
+	var errs validator.ValidationErrors
+	ok := errors.As(err, &errs)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": err.Error(),
+		})
+	}
+	c.JSON(http.StatusBadRequest, gin.H{
+		"error": removeTopStruct(errs.Translate(global.Trans)),
+	})
+}
 
 func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 	if err != nil {
@@ -61,8 +86,8 @@ func GetUserList(c *gin.Context) {
 		)
 	}
 
-	pageNum, _ := strconv.Atoi(c.Query("pageNum"))
-	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	pageNum, _ := strconv.Atoi(c.DefaultQuery("pageNum", "0"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 
 	userSrvClient := proto.NewUserClient(userConn)
 
@@ -90,4 +115,12 @@ func GetUserList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Data": result,
 	})
+}
+
+func PasswordLogin(c *gin.Context) {
+	passwordLoginForm := forms.PasswordLoginForm{}
+	if err := c.ShouldBindJSON(&passwordLoginForm); err != nil {
+		HandlerValidatorError(err, c)
+		return
+	}
 }

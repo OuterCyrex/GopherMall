@@ -9,6 +9,10 @@ import (
 func main() {
 	initialize.InitLogger()
 	initialize.InitConfig(true)
+	err := initialize.InitTrans("zh")
+	if err != nil {
+		zap.S().Panicf("init trans failed: %v", zap.Error(err))
+	}
 	R := initialize.Routers()
 
 	Port := 8080
