@@ -24,5 +24,5 @@ func InitConfig(isDebug bool) {
 		zap.S().Panicw("Viper UnMarshal YAMLFile failed")
 	}
 
-	zap.S().Debugf("Server Config: %v", global.ServerConfig)
+	zap.S().Infof("Read Server Config Success")
 }
