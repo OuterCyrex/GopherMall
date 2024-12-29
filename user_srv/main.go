@@ -2,6 +2,7 @@ package main
 
 import (
 	"GopherMall/user_srv/handler"
+	"GopherMall/user_srv/initialize"
 	proto "GopherMall/user_srv/proto/.UserProto"
 	"flag"
 	"fmt"
@@ -12,6 +13,10 @@ import (
 func main() {
 	IP := flag.String("ip", "0.0.0.0", "server ip")
 	Port := flag.Int("port", 50051, "server port")
+
+	initialize.InitLogger()
+	initialize.InitConfig(true)
+	initialize.InitMysql()
 
 	flag.Parse()
 

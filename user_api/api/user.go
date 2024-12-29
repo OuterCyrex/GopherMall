@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -190,4 +191,51 @@ func PasswordLogin(c *gin.Context) {
 			})
 		}
 	}
+}
+
+func Register(c *gin.Context) {
+	rc := context.Background()
+	registerForm := forms.RegisterForm{}
+	if err := c.ShouldBindJSON(&registerForm); err != nil {
+		HandleValidatorError(err, c)
+		return
+	}
+
+	result, err := global.RDB.Get(rc, registerForm.Mobile).Result()
+	if errors.Is(err, redis.Nil) || result != registerForm.Code {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "验证码错误",
+		})
+		return
+	}
+
+	userConn, err := grpc.NewClient(
+		fmt.Sprintf("%s:%d",
+			global.ServerConfig.UserSrvConfig.Host,
+			global.ServerConfig.UserSrvConfig.Port,
+		),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		zap.S().Errorw(fmt.Sprintf("[Register] Connect to Grpc Server Failed"),
+			"msg",
+			err.Error(),
+		)
+	}
+	userSrvClient := proto.NewUserClient(userConn)
+
+	user, err := userSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
+		NickName: registerForm.Mobile,
+		Password: registerForm.Password,
+		Mobile:   registerForm.Mobile,
+	})
+	if err != nil {
+		HandleGrpcErrorToHttp(err, c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"id":        user.Id,
+		"nick_name": user.NickName,
+		"msg":       "注册成功",
+	})
 }

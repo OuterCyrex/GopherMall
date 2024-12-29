@@ -20,9 +20,7 @@ func SendSms(c *gin.Context) {
 	var smsForm forms.SmsForm
 	err := c.ShouldBindJSON(&smsForm)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "参数不匹配",
-		})
+		HandleValidatorError(err, c)
 		return
 	}
 	if ok := validator.IsChineseMobile(smsForm.Mobile); !ok {
@@ -31,7 +29,7 @@ func SendSms(c *gin.Context) {
 		})
 		return
 	}
-	if global.RDB.Exists(rc, smsForm.Mobile).Val() != 0 && global.RDB.TTL(rc, smsForm.Mobile).Val() > 0 {
+	if global.RDB.Exists(rc, smsForm.Mobile).Val() != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "验证码已发送",
 		})

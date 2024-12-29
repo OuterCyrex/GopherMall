@@ -1,3 +1,5 @@
 .idea/
 user_api/config/config-debug.yaml
 user_api/config/config-product.yaml
+user_srv/config/config*.yaml
+user_api/win_en.sh
