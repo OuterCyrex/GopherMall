@@ -81,7 +81,7 @@ func (s *UserServer) GetUserList(ctx context.Context, req *proto.PageInfo) (*pro
 }
 
 func (s *UserServer) GetUserByMobile(ctx context.Context, request *proto.MobileRequest) (*proto.UserInfoResponse, error) {
-	user, err := global.FindByMobile(request.GetMobile())
+	user, err := model.FindByMobile(request.GetMobile())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "No Such User, Mobile: %s", request.GetMobile())
 	}
@@ -93,7 +93,7 @@ func (s *UserServer) GetUserByMobile(ctx context.Context, request *proto.MobileR
 }
 
 func (s *UserServer) GetUserById(ctx context.Context, request *proto.IdRequest) (*proto.UserInfoResponse, error) {
-	user, err := global.FindById(request.GetId())
+	user, err := model.FindById(request.GetId())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "No Such User, Id: %d", request.GetId())
 	}
@@ -105,7 +105,7 @@ func (s *UserServer) GetUserById(ctx context.Context, request *proto.IdRequest) 
 }
 
 func (s *UserServer) CreateUser(ctx context.Context, request *proto.CreateUserInfo) (*proto.UserInfoResponse, error) {
-	_, err := global.FindByMobile(request.GetMobile())
+	_, err := model.FindByMobile(request.GetMobile())
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.AlreadyExists, "Mobile Has Been Used: %s", request.GetMobile())
 	}
@@ -133,7 +133,7 @@ func (s *UserServer) CreateUser(ctx context.Context, request *proto.CreateUserIn
 }
 
 func (s *UserServer) UpdateUser(ctx context.Context, request *proto.UpdateUserInfo) (*proto.Empty, error) {
-	user, err := global.FindById(request.GetId())
+	user, err := model.FindById(request.GetId())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "No Such User, Id: %d", request.GetId())
 	}

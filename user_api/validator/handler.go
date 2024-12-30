@@ -1,4 +1,4 @@
-package utils
+package validator
 
 import (
 	"GopherMall/user_api/global"

@@ -1,4 +1,4 @@
 
 git add .
-git commit -m "update:consul"
+git commit -m "update:load_balance"
 git push origin main

@@ -3,7 +3,7 @@ package api
 import (
 	"GopherMall/user_api/forms"
 	"GopherMall/user_api/global"
-	"GopherMall/user_api/utils"
+	validator2 "GopherMall/user_api/validator"
 	"context"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
@@ -21,7 +21,7 @@ func SendSms(c *gin.Context) {
 	var smsForm forms.SmsForm
 	err := c.ShouldBindJSON(&smsForm)
 	if err != nil {
-		utils.HandleValidatorError(err, c)
+		validator2.HandleValidatorError(err, c)
 		return
 	}
 	if ok := validator.IsChineseMobile(smsForm.Mobile); !ok {

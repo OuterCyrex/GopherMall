@@ -4,8 +4,8 @@ import (
 	"GopherMall/user_api/forms"
 	"GopherMall/user_api/global"
 	"GopherMall/user_api/global/response"
-	"GopherMall/user_api/utils"
 	"GopherMall/user_api/utils/JwtUtil"
+	"GopherMall/user_api/validator"
 	proto "GopherMall/user_srv/proto/.UserProto"
 	"context"
 	"errors"
@@ -82,7 +82,7 @@ func GetUserList(c *gin.Context) {
 func PasswordLogin(c *gin.Context) {
 	passwordLoginForm := forms.PasswordLoginForm{}
 	if err := c.ShouldBindJSON(&passwordLoginForm); err != nil {
-		utils.HandleValidatorError(err, c)
+		validator.HandleValidatorError(err, c)
 		return
 	}
 
@@ -96,6 +96,7 @@ func PasswordLogin(c *gin.Context) {
 	userInfoResp, err := global.UserSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
 		Mobile: passwordLoginForm.Mobile,
 	})
+
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
 			switch e.Code() {
@@ -111,37 +112,37 @@ func PasswordLogin(c *gin.Context) {
 			}
 		}
 		return
-	} else {
-		if passwordValid, _ := global.UserSrvClient.CheckPasswordInfo(context.Background(), &proto.PasswordCheck{
-			Password:          passwordLoginForm.Password,
-			EncryptedPassword: userInfoResp.GetPassword(),
-		}); passwordValid == nil || !passwordValid.Success {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"msg": "密码错误",
-			})
-			return
-		} else {
-			token, err := JwtUtil.CreateJWT(uint(userInfoResp.Id), userInfoResp.NickName, uint(userInfoResp.Role))
-			if err != nil {
-				zap.S().Debugf("[PwdLogin] Generate JWT Failed: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"msg": "服务器出错",
-				})
-				return
-			}
-			c.JSON(http.StatusOK, gin.H{
-				"token": token,
-				"msg":   "登陆成功",
-			})
-		}
 	}
+
+	if passwordValid, _ := global.UserSrvClient.CheckPasswordInfo(context.Background(), &proto.PasswordCheck{
+		Password:          passwordLoginForm.Password,
+		EncryptedPassword: userInfoResp.GetPassword(),
+	}); passwordValid == nil || !passwordValid.Success {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "密码错误",
+		})
+		return
+	}
+
+	token, err := JwtUtil.CreateJWT(uint(userInfoResp.Id), userInfoResp.NickName, uint(userInfoResp.Role))
+	if err != nil {
+		zap.S().Debugf("[PwdLogin] Generate JWT Failed: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"msg": "服务器出错",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"msg":   "登陆成功",
+	})
 }
 
 func Register(c *gin.Context) {
 	rc := context.Background()
 	registerForm := forms.RegisterForm{}
 	if err := c.ShouldBindJSON(&registerForm); err != nil {
-		utils.HandleValidatorError(err, c)
+		validator.HandleValidatorError(err, c)
 		return
 	}
 
