@@ -4,45 +4,20 @@ import (
 	"GopherMall/user_api/forms"
 	"GopherMall/user_api/global"
 	"GopherMall/user_api/global/response"
+	"GopherMall/user_api/utils"
 	"GopherMall/user_api/utils/JwtUtil"
 	proto "GopherMall/user_srv/proto/.UserProto"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
-
-func removeTopStruct(fields map[string]string) map[string]string {
-	resp := map[string]string{}
-	for field, err := range fields {
-		resp[field[strings.Index(field, ".")+1:]] = err
-	}
-	return resp
-}
-
-func HandleValidatorError(err error, c *gin.Context) {
-	var errs validator.ValidationErrors
-	ok := errors.As(err, &errs)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "系统内部错误",
-		})
-	}
-	c.JSON(http.StatusBadRequest, gin.H{
-		"error": removeTopStruct(errs.Translate(global.Trans)),
-	})
-}
 
 func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 	if err != nil {
@@ -74,26 +49,11 @@ func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 }
 
 func GetUserList(c *gin.Context) {
-	userConn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d",
-			global.ServerConfig.UserSrvConfig.Host,
-			global.ServerConfig.UserSrvConfig.Port,
-		),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		zap.S().Errorw(fmt.Sprintf("[GetUserList] Connect to Grpc Server Failed"),
-			"msg",
-			err.Error(),
-		)
-	}
 
 	pageNum, _ := strconv.Atoi(c.DefaultQuery("pageNum", "0"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 
-	userSrvClient := proto.NewUserClient(userConn)
-
-	rsp, err := userSrvClient.GetUserList(context.Background(), &proto.PageInfo{
+	rsp, err := global.UserSrvClient.GetUserList(context.Background(), &proto.PageInfo{
 		PageNum:  uint32(pageNum),
 		PageSize: uint32(pageSize),
 	})
@@ -122,7 +82,7 @@ func GetUserList(c *gin.Context) {
 func PasswordLogin(c *gin.Context) {
 	passwordLoginForm := forms.PasswordLoginForm{}
 	if err := c.ShouldBindJSON(&passwordLoginForm); err != nil {
-		HandleValidatorError(err, c)
+		utils.HandleValidatorError(err, c)
 		return
 	}
 
@@ -133,23 +93,7 @@ func PasswordLogin(c *gin.Context) {
 		return
 	}
 
-	userConn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d",
-			global.ServerConfig.UserSrvConfig.Host,
-			global.ServerConfig.UserSrvConfig.Port,
-		),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		zap.S().Errorw(fmt.Sprintf("[PwdLogin] Connect to Grpc Server Failed"),
-			"msg",
-			err.Error(),
-		)
-	}
-
-	userSrvClient := proto.NewUserClient(userConn)
-
-	userInfoResp, err := userSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
+	userInfoResp, err := global.UserSrvClient.GetUserByMobile(context.Background(), &proto.MobileRequest{
 		Mobile: passwordLoginForm.Mobile,
 	})
 	if err != nil {
@@ -168,7 +112,7 @@ func PasswordLogin(c *gin.Context) {
 		}
 		return
 	} else {
-		if passwordValid, _ := userSrvClient.CheckPasswordInfo(context.Background(), &proto.PasswordCheck{
+		if passwordValid, _ := global.UserSrvClient.CheckPasswordInfo(context.Background(), &proto.PasswordCheck{
 			Password:          passwordLoginForm.Password,
 			EncryptedPassword: userInfoResp.GetPassword(),
 		}); passwordValid == nil || !passwordValid.Success {
@@ -197,7 +141,7 @@ func Register(c *gin.Context) {
 	rc := context.Background()
 	registerForm := forms.RegisterForm{}
 	if err := c.ShouldBindJSON(&registerForm); err != nil {
-		HandleValidatorError(err, c)
+		utils.HandleValidatorError(err, c)
 		return
 	}
 
@@ -209,22 +153,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	userConn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d",
-			global.ServerConfig.UserSrvConfig.Host,
-			global.ServerConfig.UserSrvConfig.Port,
-		),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		zap.S().Errorw(fmt.Sprintf("[Register] Connect to Grpc Server Failed"),
-			"msg",
-			err.Error(),
-		)
-	}
-	userSrvClient := proto.NewUserClient(userConn)
-
-	user, err := userSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
+	user, err := global.UserSrvClient.CreateUser(context.Background(), &proto.CreateUserInfo{
 		NickName: registerForm.Mobile,
 		Password: registerForm.Password,
 		Mobile:   registerForm.Mobile,

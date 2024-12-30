@@ -1,4 +1,4 @@
 
 git add .
-git commit -m "update:user_srv"
+git commit -m "update:consul"
 git push origin main

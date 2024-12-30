@@ -14,7 +14,7 @@ type CustomClaims struct {
 }
 
 func CreateJWT(ID uint, nickName string, AuthorityId uint) (string, error) {
-	expireTime := time.Now().Add(7 * 24 * time.Hour).Unix()
+	expireTime := time.Now().Add(5 * 24 * time.Hour).Unix()
 	claims := CustomClaims{
 		ID:          ID,
 		NickName:    nickName,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func FindUserByField(field string) func(data interface{}) (model.User, error) {
+func findUserByField(field string) func(data interface{}) (model.User, error) {
 	return func(data interface{}) (model.User, error) {
 		var user model.User
 		err := DB.Model(&model.User{}).Where(fmt.Sprintf("%s = ?", field), data).First(&user).Error
@@ -13,5 +13,5 @@ func FindUserByField(field string) func(data interface{}) (model.User, error) {
 	}
 }
 
-var FindById = FindUserByField("id")
-var FindByMobile = FindUserByField("mobile")
+var FindById = findUserByField("id")
+var FindByMobile = findUserByField("mobile")

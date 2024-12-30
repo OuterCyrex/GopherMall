@@ -10,6 +10,7 @@ func main() {
 	initialize.InitLogger()
 	initialize.InitConfig(true)
 	initialize.InitRedis()
+	initialize.InitSrvConnection()
 	err := initialize.InitTrans("zh")
 	if err != nil {
 		zap.S().Panicf("init trans failed: %v", zap.Error(err))
