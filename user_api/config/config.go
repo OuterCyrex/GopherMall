@@ -8,37 +8,45 @@ package config
 // Viper在使用蛇形命名法时存在一些问题，故不使用蛇形
 
 type MainConfig struct {
-	Name      string          `mapstructure:"name"`
-	UserSrv   UserSrvConfig   `mapstructure:"userSrv"`
-	JwtKey    string          `mapstructure:"jwtKey"`
-	AliyunSms AliyunSmsConfig `mapstructure:"aliyunSms"`
-	Redis     RedisConfig     `mapstructure:"redis"`
-	Consul    ConsulConfig    `mapstructure:"consul"`
+	Name      string          `mapstructure:"name" json:"name"`
+	UserSrv   UserSrvConfig   `mapstructure:"userSrv" json:"userSrv"`
+	JwtKey    string          `mapstructure:"jwtKey" json:"jwtKey"`
+	AliyunSms AliyunSmsConfig `mapstructure:"aliyunSms" json:"aliyunSms"`
+	Redis     RedisConfig     `mapstructure:"redis" json:"redis"`
+	Consul    ConsulConfig    `mapstructure:"consul" json:"consul"`
 }
 
 type UserSrvConfig struct {
-	Name string `mapstructure:"name"`
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Name string `mapstructure:"name" json:"name"`
+	Host string `mapstructure:"host" json:"host"`
+	Port int    `mapstructure:"port" json:"port"`
 }
 
 type RedisConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
-	DB   int    `mapstructure:"db"`
+	Host string `mapstructure:"host" json:"host"`
+	Port int    `mapstructure:"port" json:"port"`
+	DB   int    `mapstructure:"db" json:"db"`
 }
 
 type AliyunSmsConfig struct {
-	RegionId        string `mapstruct:"regionId"`
-	AccessKeyId     string `mapstruct:"accessKeyId"`
-	AccessKeySecret string `mapstruct:"accessKeySecret"`
-	Domain          string `mapstruct:"domain"`
-	Version         string `mapstruct:"version"`
-	SignName        string `mapstruct:"signName"`
-	TemplateCode    string `mapstruct:"templateCode"`
+	RegionId        string `mapstruct:"regionId" json:"regionId"`
+	AccessKeyId     string `mapstruct:"accessKeyId" json:"accessKeyId"`
+	AccessKeySecret string `mapstruct:"accessKeySecret" json:"accessKeySecret"`
+	Domain          string `mapstruct:"domain" json:"domain"`
+	Version         string `mapstruct:"version" json:"version"`
+	SignName        string `mapstruct:"signName" json:"signName"`
+	TemplateCode    string `mapstruct:"templateCode" json:"templateCode"`
 }
 
 type ConsulConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Host string `mapstructure:"host" json:"host"`
+	Port int    `mapstructure:"port" json:"port"`
+}
+
+type NacosConfig struct {
+	Host      string `mapstruct:"host"`
+	Port      uint64 `mapstruct:"port"`
+	Namespace string `mapstruct:"namespace"`
+	DataId    string `mapstruct:"dataId"`
+	Group     string `mapstruct:"group"`
 }

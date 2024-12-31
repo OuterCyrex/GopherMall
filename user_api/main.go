@@ -13,7 +13,7 @@ func main() {
 	isDebug := runtime.GOOS == "windows"
 
 	initialize.InitLogger()
-	initialize.InitConfig(isDebug)
+	initialize.InitConfig()
 	initialize.InitRedis()
 	initialize.InitSrvConnection(14, policy.RoundRobin)
 	err := initialize.InitTrans("zh")

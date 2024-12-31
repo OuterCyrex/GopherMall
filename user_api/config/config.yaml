@@ -1,0 +1,5 @@
+host: '127.0.0.1'
+port: 8848
+namespace: 'c2ecd3d2-5471-4cf3-a852-23d6c591d1b2'
+dataId: 'user_api'
+group: 'Debug'
