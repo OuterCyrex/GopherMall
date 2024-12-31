@@ -12,14 +12,11 @@ import (
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
-	"runtime"
 )
 
 func main() {
-	isDebug := runtime.GOOS == "windows"
-
 	initialize.InitLogger()
-	initialize.InitConfig(isDebug)
+	initialize.InitConfig()
 	initialize.InitMysql()
 
 	// 动态端口分配

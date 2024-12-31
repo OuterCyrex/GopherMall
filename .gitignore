@@ -1,5 +1,4 @@
 .idea/
-user_srv/config/config*.yaml
 user_api/dump.rdb
 git.sh
 tmp
