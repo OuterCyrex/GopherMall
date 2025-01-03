@@ -4,7 +4,6 @@ option go_package = ".GoodsProto";
 service Goods{
   //商品接口
   rpc GoodsList(GoodsFilterRequest) returns(GoodsListResponse);
-  //现在用户提交订单有多个商品，你得批量查询商品的信息吧
   rpc BatchGetGoods(BatchGoodsIdInfo) returns(GoodsListResponse); //批量获取商品信息
   rpc CreateGoods(CreateGoodsInfo) returns (GoodsInfoResponse);
   rpc DeleteGoods(DeleteGoodsInfo) returns (Empty);

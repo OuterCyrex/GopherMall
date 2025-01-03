@@ -337,7 +337,6 @@ func (c *goodsClient) UpdateCategoryBrand(ctx context.Context, in *CategoryBrand
 type GoodsServer interface {
 	// 商品接口
 	GoodsList(context.Context, *GoodsFilterRequest) (*GoodsListResponse, error)
-	// 现在用户提交订单有多个商品，你得批量查询商品的信息吧
 	BatchGetGoods(context.Context, *BatchGoodsIdInfo) (*GoodsListResponse, error)
 	CreateGoods(context.Context, *CreateGoodsInfo) (*GoodsInfoResponse, error)
 	DeleteGoods(context.Context, *DeleteGoodsInfo) (*Empty, error)

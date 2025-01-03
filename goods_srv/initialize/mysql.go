@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"GopherMall/goods_srv/global"
-	"GopherMall/goods_srv/model"
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -41,11 +40,11 @@ func InitMysql() {
 		panic(err)
 	}
 
-	_ = global.DB.AutoMigrate(
-		&model.Category{},
-		&model.Banner{},
-		&model.Brands{},
-		&model.GoodsCategoryBrand{},
-		&model.Goods{},
-	)
+	//_ = global.DB.AutoMigrate(
+	//	&model.Category{},
+	//	&model.Banner{},
+	//	&model.Brands{},
+	//	&model.GoodsCategoryBrand{},
+	//	&model.Goods{},
+	//)
 }

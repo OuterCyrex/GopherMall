@@ -36,6 +36,8 @@ func main() {
 
 	gateway.HealthCheck(fmt.Sprintf("127.0.0.1:%d", port), 14)
 
+	zap.S().Infof("grpc server Runs On: %d", port)
+
 	err = server.Serve(lis)
 	if err != nil {
 		zap.S().Panicf("Run grpc server failed: %v", err)
