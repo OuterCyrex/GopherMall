@@ -66,11 +66,14 @@ func (g GoodsServer) GetSubCategory(ctx context.Context, req *proto.CategoryList
 }
 
 func (g GoodsServer) CreateCategory(ctx context.Context, req *proto.CategoryInfoRequest) (*proto.CategoryInfoResponse, error) {
+	if req.Level > 3 || req.Level < 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "Level 的取值必须为 {1, 2, 3} 之中的数字")
+	}
+
 	category := model.Category{
-		Name:             req.Name,
-		ParentCategoryID: req.ParentCategory,
-		Level:            req.Level,
-		IsTab:            req.IsTab,
+		Name:  req.Name,
+		Level: req.Level,
+		IsTab: req.IsTab,
 	}
 
 	if req.Level != 1 {
@@ -78,18 +81,58 @@ func (g GoodsServer) CreateCategory(ctx context.Context, req *proto.CategoryInfo
 		if global.DB.Model(&model.Category{}).Where("ID = ?", req.ParentCategory).Count(&count); count == 0 {
 			return nil, status.Errorf(codes.NotFound, "父分类不存在")
 		}
+		category.ParentCategoryID = req.ParentCategory
 	}
 
 	if err := global.DB.Save(&category).Error; err != nil {
 		return nil, err
 	}
 
-	return &proto.CategoryInfoResponse{Id: category.ID}, nil
+	return &proto.CategoryInfoResponse{
+		Id:    category.ID,
+		Name:  category.Name,
+		Level: category.Level,
+		IsTab: category.IsTab,
+	}, nil
 }
 
 func (g GoodsServer) DeleteCategory(ctx context.Context, req *proto.DeleteCategoryRequest) (*proto.Empty, error) {
-	return nil, nil
+	if result := global.DB.Delete(&model.Category{}, req.Id); result.Error != nil {
+		return nil, result.Error
+	}
+	return &proto.Empty{}, nil
 }
+
 func (g GoodsServer) UpdateCategory(ctx context.Context, req *proto.CategoryInfoRequest) (*proto.Empty, error) {
-	return nil, nil
+	if req.Level > 3 || req.Level < 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "Level 的取值必须为 {1, 2, 3} 之中的数字")
+	}
+
+	var category model.Category
+
+	if count := global.DB.Model(&model.Category{}).Where("Id = ?", req.Id).Find(&category); count.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "分类不存在")
+	}
+
+	if req.Name != "" {
+		category.Name = req.Name
+	}
+
+	if req.Level != 0 {
+		category.Level = req.Level
+	}
+
+	if req.IsTab {
+		category.IsTab = req.IsTab
+	}
+
+	if req.ParentCategory != 0 {
+		category.ParentCategoryID = req.ParentCategory
+	}
+
+	err := global.DB.Updates(&category).Error
+	if err != nil {
+		return nil, err
+	}
+	return &proto.Empty{}, nil
 }
