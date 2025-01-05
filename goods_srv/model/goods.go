@@ -13,7 +13,7 @@ type Category struct {
 type Brands struct {
 	BaseModel
 	Name string `gorm:"type:varchar(20);not null" json:"name"`
-	Logo string `gorm:"type:varchar(255);not null;default:''" json:"logo"`
+	Logo string `gorm:"type:varchar(255);not null;" json:"logo"`
 }
 
 type GoodsCategoryBrand struct {
