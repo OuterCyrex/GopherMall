@@ -3,14 +3,11 @@ package main
 import (
 	"GopherMall/user_api/gateway/policy"
 	"GopherMall/user_api/initialize"
-	"GopherMall/user_api/utils"
 	"fmt"
 	"go.uber.org/zap"
-	"runtime"
 )
 
 func main() {
-	isDebug := runtime.GOOS == "windows"
 
 	initialize.InitLogger()
 	initialize.InitConfig()
@@ -22,15 +19,6 @@ func main() {
 	}
 
 	Port := 8080
-
-	// 若为生产环境则使用空闲端口
-	if !isDebug {
-		port, err := utils.GetFreePort()
-		if err != nil {
-			zap.S().Panicf("get free port failed: %v", zap.Error(err))
-		}
-		Port = port
-	}
 
 	R := initialize.Routers()
 

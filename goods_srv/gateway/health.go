@@ -38,7 +38,7 @@ func HealthCheck(grpcAddr string, checkInterval uint) {
 		Name:    global.ServerConfig.Name,
 		ID:      serviceUUID,
 		Port:    port,
-		Tags:    []string{"user", "grpc", "service"},
+		Tags:    []string{"goods", "grpc", "service"},
 		Address: "127.0.0.1",
 		Check:   check,
 	})
