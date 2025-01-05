@@ -48,7 +48,7 @@ type Goods struct {
 	ClickNum        int32    `gorm:"type:int;default:0;not null" json:"click_num"`
 	SoldNum         int32    `gorm:"type:int;default:0;not null" json:"sold_num"`
 	FavNum          int32    `gorm:"type:int;default:0;not null" json:"fav_num"`
-	MarkPrice       float32  `gorm:"not null"`
+	MarkPrice       float32  `gorm:"not null;column:market_price"`
 	ShopPrice       float32  `gorm:"not null"`
 	GoodsBrief      string   `gorm:"type:varchar(255);not null" json:"goods_brief"`
 	Images          GormList `gorm:"type:varchar(1000);not null" json:"images"`

@@ -108,20 +108,118 @@ func (g GoodsServer) BatchGetGoods(ctx context.Context, req *proto.BatchGoodsIdI
 }
 
 func (g GoodsServer) CreateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*proto.GoodsInfoResponse, error) {
-	return nil, nil
+	var brand model.Brands
+	var category model.Category
 
+	result := global.DB.Model(&model.Brands{}).Where("Id = ?", req.BrandId).Find(&brand)
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效品牌ID")
+	}
+
+	result = global.DB.Model(&model.Category{}).Where("Id = ?", req.CategoryId).Find(&category)
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效标签ID")
+	}
+
+	good := model.Goods{
+		Category:        category,
+		CategoryID:      req.CategoryId,
+		Brands:          brand,
+		BrandsID:        req.BrandId,
+		OnSale:          req.OnSale,
+		ShipFree:        req.ShipFree,
+		IsNew:           req.IsNew,
+		IsHot:           req.IsHot,
+		Name:            req.Name,
+		GoodsSn:         req.GoodsSn,
+		MarkPrice:       req.MarketPrice,
+		ShopPrice:       req.ShopPrice,
+		GoodsBrief:      req.GoodsBrief,
+		Images:          req.Images,
+		DescImages:      req.DescImages,
+		GoodsFrontImage: req.GoodsFrontImage,
+	}
+
+	if err := global.DB.Save(&good).Error; err != nil {
+		return nil, err
+	}
+
+	return &proto.GoodsInfoResponse{
+		Id: good.ID,
+	}, nil
 }
+
 func (g GoodsServer) DeleteGoods(ctx context.Context, req *proto.DeleteGoodsInfo) (*proto.Empty, error) {
-	return nil, nil
+	result := global.DB.Where("Id = ?", req.Id).Delete(&model.Goods{})
 
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效ID")
+	}
+
+	return &proto.Empty{}, nil
 }
-func (g GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*proto.Empty, error) {
-	return nil, nil
 
+func (g GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*proto.Empty, error) {
+	var brand model.Brands
+	var category model.Category
+	var count int64
+
+	if global.DB.Model(&model.Goods{}).Where("Id = ?", req.Id).Count(&count); count == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效商品ID")
+	}
+
+	goods := model.Goods{
+		OnSale:          req.OnSale,
+		ShipFree:        req.ShipFree,
+		IsNew:           req.IsNew,
+		IsHot:           req.IsHot,
+		Name:            req.Name,
+		GoodsSn:         req.GoodsSn,
+		MarkPrice:       req.MarketPrice,
+		ShopPrice:       req.ShopPrice,
+		GoodsBrief:      req.GoodsBrief,
+		Images:          req.Images,
+		DescImages:      req.DescImages,
+		GoodsFrontImage: req.GoodsFrontImage,
+	}
+
+	goods.ID = req.Id
+
+	if req.BrandId > 0 {
+		result := global.DB.Model(&model.Brands{}).Where("Id = ?", req.BrandId).Find(&brand)
+		if result.RowsAffected == 0 {
+			return nil, status.Errorf(codes.NotFound, "无效品牌ID")
+		}
+		goods.Brands = brand
+		goods.BrandsID = req.BrandId
+	}
+
+	if req.CategoryId > 0 {
+		result := global.DB.Model(&model.Category{}).Where("Id = ?", req.CategoryId).Find(&category)
+		if result.RowsAffected == 0 {
+			return nil, status.Errorf(codes.NotFound, "无效标签ID")
+		}
+
+		goods.Category = category
+		goods.CategoryID = req.CategoryId
+	}
+
+	result := global.DB.Updates(&goods)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &proto.Empty{}, nil
 }
 func (g GoodsServer) GetGoodsDetail(ctx context.Context, req *proto.GoodInfoRequest) (*proto.GoodsInfoResponse, error) {
-	return nil, nil
+	var Good model.Goods
 
+	result := global.DB.Where("Id = ?", req.Id).Find(&Good)
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效ID")
+	}
+
+	return ModelToGoods(Good), nil
 }
 
 func ModelToGoods(good model.Goods) *proto.GoodsInfoResponse {
