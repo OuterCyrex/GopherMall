@@ -1,9 +1,9 @@
 package initialize
 
 import (
-	"GopherMall/user_api/gateway"
+	"GopherMall/user_api/gateway/consul"
 	"GopherMall/user_api/global"
-	proto "GopherMall/user_srv/proto/.UserProto"
+	proto "GopherMall/user_api/proto/.UserProto"
 	"fmt"
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	"go.uber.org/zap"
@@ -36,7 +36,7 @@ func InitSrvConnection(wait uint, policy string) {
 func InitSrvConnection2() {
 
 	// 从Consul中拉取 User_srv 服务信息
-	data, err := gateway.PullServiceByName(global.ServerConfig.UserSrv.Name)
+	data, err := consul.PullServiceByName(global.ServerConfig.UserSrv.Name)
 	if err != nil {
 		zap.S().Panicf("Init Service Connection Failed: %v", err)
 		return

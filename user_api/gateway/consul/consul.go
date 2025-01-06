@@ -1,4 +1,4 @@
-package gateway
+package consul
 
 import (
 	"GopherMall/user_api/global"

@@ -23,8 +23,6 @@ func main() {
 		zap.S().Panicf("init trans failed: %v", zap.Error(err))
 	}
 
-	Port := 8081
-
 	R := initialize.Routers()
 
 	registryId := fmt.Sprintf("%s", uuid.NewV4())
@@ -41,10 +39,10 @@ func main() {
 		zap.S().Panicf("Connect to Register Center Failed: %v", err)
 	}
 
-	zap.S().Debugf("server start... port: %d", Port)
+	zap.S().Debugf("server start... port: %d", global.ServerConfig.Port)
 
 	go func() {
-		if err := R.Run(fmt.Sprintf(":%d", Port)); err != nil {
+		if err := R.Run(fmt.Sprintf(":%d", global.ServerConfig.Port)); err != nil {
 			zap.S().Panicf("server start failed : %v", err)
 		}
 	}()

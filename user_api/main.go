@@ -1,10 +1,16 @@
 package main
 
 import (
+	"GopherMall/user_api/gateway/consul"
 	"GopherMall/user_api/gateway/policy"
+	"GopherMall/user_api/global"
 	"GopherMall/user_api/initialize"
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -18,13 +24,36 @@ func main() {
 		zap.S().Panicf("init trans failed: %v", zap.Error(err))
 	}
 
-	Port := 8080
+	registryId := fmt.Sprintf("%s", uuid.NewV4())
 
 	R := initialize.Routers()
 
-	zap.S().Debugf("server start... port: %d", Port)
+	registryClient := consul.NewRegistryClient(global.ServerConfig.Consul.Host, global.ServerConfig.Consul.Port)
+	err = registryClient.Register(
+		global.ServerConfig.Address,
+		global.ServerConfig.Port,
+		global.ServerConfig.Name,
+		global.ServerConfig.Tags,
+		fmt.Sprintf("%s", registryId),
+	)
+	if err != nil {
+		zap.S().Panicf("Connect to Register Center Failed: %v", err)
+	}
 
-	if err := R.Run(fmt.Sprintf(":%d", Port)); err != nil {
-		zap.S().Panicf("server start failed : %v", err)
+	zap.S().Debugf("server start... port: %d", global.ServerConfig.Port)
+
+	go func() {
+		if err := R.Run(fmt.Sprintf(":%d", global.ServerConfig.Port)); err != nil {
+			zap.S().Panicf("server start failed : %v", err)
+		}
+	}()
+
+	//终止时注销服务
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	err = registryClient.DeRegister(registryId)
+	if err == nil {
+		zap.S().Infof("API Gateway Deregistry Success")
 	}
 }

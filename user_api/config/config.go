@@ -9,6 +9,9 @@ package config
 
 type MainConfig struct {
 	Name      string          `mapstructure:"name" json:"name"`
+	Address   string          `mapstructure:"address" json:"address"`
+	Port      int             `mapstructure:"port" json:"port"`
+	Tags      []string        `mapstructure:"tags" json:"tags"`
 	UserSrv   UserSrvConfig   `mapstructure:"userSrv" json:"userSrv"`
 	JwtKey    string          `mapstructure:"jwtKey" json:"jwtKey"`
 	AliyunSms AliyunSmsConfig `mapstructure:"aliyunSms" json:"aliyunSms"`
