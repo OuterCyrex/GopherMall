@@ -100,7 +100,6 @@ func NewGoods(c *gin.Context) {
 		MarketPrice:     goodsForm.MarketPrice,
 		ShopPrice:       goodsForm.ShopPrice,
 		GoodsBrief:      goodsForm.GoodsBrief,
-		GoodsDesc:       goodsForm.GoodsDesc,
 		ShipFree:        *goodsForm.ShipFree,
 		Images:          goodsForm.Images,
 		DescImages:      goodsForm.DescImages,
@@ -114,4 +113,54 @@ func NewGoods(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func Detail(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "无效参数",
+		})
+		return
+	}
+
+	ctx := context.Background()
+
+	r, err := global.GoodsSrvClient.GetGoodsDetail(ctx, &proto.GoodInfoRequest{
+		Id: int32(id),
+	})
+
+	if err != nil {
+		HandleGrpcErrorToHttp(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": r,
+	})
+}
+
+func Delete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "无效参数",
+		})
+		return
+	}
+
+	ctx := context.Background()
+
+	_, err = global.GoodsSrvClient.DeleteGoods(ctx, &proto.DeleteGoodsInfo{
+		Id: int32(id),
+	})
+
+	if err != nil {
+		HandleGrpcErrorToHttp(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "删除成功",
+	})
 }

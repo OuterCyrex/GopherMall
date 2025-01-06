@@ -10,7 +10,6 @@ type GoodsForm struct {
 	GoodsBrief  string   `form:"goods_brief" json:"goods_brief" binding:"required,min=3"`
 	Images      []string `form:"images" json:"images" binding:"required,min=1"`
 	DescImages  []string `form:"desc_images" json:"desc_images" binding:"required,min=1"`
-	GoodsDesc   string   `form:"desc" json:"desc" binding:"required,min=3"`
 	ShipFree    *bool    `form:"ship_free" json:"ship_free" binding:"required"`
 	FrontImage  string   `form:"front_image" json:"front_image" binding:"required,url"`
 	BrandId     int32    `form:"brand" json:"brand" binding:"required"`
