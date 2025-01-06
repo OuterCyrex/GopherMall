@@ -1,8 +1,10 @@
 package goods
 
 import (
+	"GopherMall/goods_api/forms"
 	"GopherMall/goods_api/global"
 	proto "GopherMall/goods_api/proto/.GoodsProto"
+	"GopherMall/goods_api/validator"
 	"context"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
@@ -81,4 +83,35 @@ func List(c *gin.Context) {
 		"total": resp.Total,
 		"data":  resp.Data,
 	})
+}
+
+func NewGoods(c *gin.Context) {
+	goodsForm := forms.GoodsForm{}
+	if err := c.ShouldBindJSON(&goodsForm); err != nil {
+		validator.HandleValidatorError(err, c)
+		return
+	}
+
+	ctx := context.Background()
+	resp, err := global.GoodsSrvClient.CreateGoods(ctx, &proto.CreateGoodsInfo{
+		Name:            goodsForm.Name,
+		GoodsSn:         goodsForm.GoodsSn,
+		Stocks:          goodsForm.Stocks,
+		MarketPrice:     goodsForm.MarketPrice,
+		ShopPrice:       goodsForm.ShopPrice,
+		GoodsBrief:      goodsForm.GoodsBrief,
+		GoodsDesc:       goodsForm.GoodsDesc,
+		ShipFree:        *goodsForm.ShipFree,
+		Images:          goodsForm.Images,
+		DescImages:      goodsForm.DescImages,
+		GoodsFrontImage: goodsForm.FrontImage,
+		CategoryId:      goodsForm.CategoryId,
+		BrandId:         goodsForm.BrandId,
+	})
+	if err != nil {
+		HandleGrpcErrorToHttp(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

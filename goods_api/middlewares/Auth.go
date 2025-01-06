@@ -2,12 +2,18 @@ package middlewares
 
 import (
 	"GopherMall/goods_api/global"
-	customjwt "GopherMall/goods_api/utils/JwtUtil"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"go.uber.org/zap"
 	"net/http"
 )
+
+type CustomClaims struct {
+	ID          uint
+	NickName    string
+	AuthorityId uint
+	jwt.StandardClaims
+}
 
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -19,7 +25,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		token, err := jwt.ParseWithClaims(authHeader, &customjwt.CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(authHeader, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(global.ServerConfig.JwtKey), nil
 		})
 		if err != nil {
@@ -39,8 +45,8 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 				return
 			}
 		}
-		c.Set("claims", token.Claims.(*customjwt.CustomClaims))
-		c.Set("usersId", token.Claims.(*customjwt.CustomClaims).ID)
+		c.Set("claims", token.Claims.(*CustomClaims))
+		c.Set("usersId", token.Claims.(*CustomClaims).ID)
 		return
 	}
 }
@@ -48,7 +54,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 func IsAdminAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, ok := c.Get("claims")
-		if ok && user.(*customjwt.CustomClaims).AuthorityId != 1 {
+		if ok && user.(*CustomClaims).AuthorityId != 1 {
 			return
 		}
 		c.JSON(http.StatusForbidden, gin.H{
