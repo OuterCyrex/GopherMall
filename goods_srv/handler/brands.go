@@ -39,7 +39,7 @@ func (g GoodsServer) CreateBrand(ctx context.Context, req *proto.BrandRequest) (
 
 	if global.DB.Model(&model.Brands{}).Where("Name = ?", req.Name).Count(&count); count != 0 {
 		fmt.Println(count)
-		return nil, status.Errorf(codes.AlreadyExists, "商品名已存在")
+		return nil, status.Errorf(codes.AlreadyExists, "品牌名已存在")
 	}
 
 	brand := &model.Brands{
@@ -70,7 +70,7 @@ func (g GoodsServer) UpdateBrand(ctx context.Context, req *proto.BrandRequest) (
 
 	if global.DB.Model(&model.Brands{}).Where("Name = ?", req.Name).Count(&count); count != 0 {
 		fmt.Println(count)
-		return nil, status.Errorf(codes.AlreadyExists, "商品名已存在")
+		return nil, status.Errorf(codes.AlreadyExists, "品牌名已存在")
 	}
 
 	brands := model.Brands{}

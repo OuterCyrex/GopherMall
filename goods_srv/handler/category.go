@@ -97,16 +97,13 @@ func (g GoodsServer) CreateCategory(ctx context.Context, req *proto.CategoryInfo
 }
 
 func (g GoodsServer) DeleteCategory(ctx context.Context, req *proto.DeleteCategoryRequest) (*proto.Empty, error) {
-	if result := global.DB.Delete(&model.Category{}, req.Id); result.Error != nil {
-		return nil, result.Error
+	if result := global.DB.Delete(&model.Category{}, req.Id); result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效ID")
 	}
 	return &proto.Empty{}, nil
 }
 
 func (g GoodsServer) UpdateCategory(ctx context.Context, req *proto.CategoryInfoRequest) (*proto.Empty, error) {
-	if req.Level > 3 || req.Level < 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "Level 的取值必须为 {1, 2, 3} 之中的数字")
-	}
 
 	var category model.Category
 
@@ -119,10 +116,13 @@ func (g GoodsServer) UpdateCategory(ctx context.Context, req *proto.CategoryInfo
 	}
 
 	if req.Level != 0 {
+		if req.Level > 3 || req.Level < 1 {
+			return nil, status.Errorf(codes.InvalidArgument, "Level 的取值必须为 {1, 2, 3} 之中的数字")
+		}
 		category.Level = req.Level
 	}
 
-	if req.IsTab {
+	if req.IsTab != category.IsTab {
 		category.IsTab = req.IsTab
 	}
 
@@ -130,7 +130,7 @@ func (g GoodsServer) UpdateCategory(ctx context.Context, req *proto.CategoryInfo
 		category.ParentCategoryID = req.ParentCategory
 	}
 
-	err := global.DB.Updates(&category).Error
+	err := global.DB.Save(&category).Error
 	if err != nil {
 		return nil, err
 	}

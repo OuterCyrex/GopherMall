@@ -162,9 +162,9 @@ func (g GoodsServer) DeleteGoods(ctx context.Context, req *proto.DeleteGoodsInfo
 func (g GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo) (*proto.Empty, error) {
 	var brand model.Brands
 	var category model.Category
-	var count int64
+	var former model.Goods
 
-	if global.DB.Model(&model.Goods{}).Where("Id = ?", req.Id).Count(&count); count == 0 {
+	if result := global.DB.Model(&model.Goods{}).Where("Id = ?", req.Id).Find(&former); result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.NotFound, "无效商品ID")
 	}
 
@@ -204,7 +204,22 @@ func (g GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo
 		goods.CategoryID = req.CategoryId
 	}
 
-	result := global.DB.Updates(&goods)
+	goodsMap := map[string]interface{}{}
+
+	if req.ShipFree != former.ShipFree {
+		goodsMap["ship_free"] = req.ShipFree
+	}
+	if req.IsNew != former.IsNew {
+		goodsMap["is_new"] = req.IsNew
+	}
+	if req.IsHot != former.IsHot {
+		goodsMap["is_hot"] = req.IsHot
+	}
+	if req.OnSale != former.OnSale {
+		goodsMap["on_sale"] = req.OnSale
+	}
+
+	result := global.DB.Updates(&goods).Updates(goodsMap)
 	if result.Error != nil {
 		return nil, result.Error
 	}

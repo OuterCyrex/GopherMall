@@ -14,3 +14,9 @@ type GoodsForm struct {
 	FrontImage  string   `form:"front_image" json:"front_image" binding:"required,url"`
 	BrandId     int32    `form:"brand" json:"brand" binding:"required"`
 }
+
+type GoodsStatusForm struct {
+	IsNew  *bool `form:"is_new" json:"is_new" binding:"required"`
+	IsHot  *bool `form:"is_hot" json:"is_hot" binding:"required"`
+	OnSale *bool `form:"on_sale" json:"on_sale" binding:"required"`
+}

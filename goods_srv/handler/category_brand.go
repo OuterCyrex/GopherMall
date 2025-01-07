@@ -113,6 +113,10 @@ func (g GoodsServer) UpdateCategoryBrand(ctx context.Context, req *proto.Categor
 	var count int64
 
 	var categoryBrand model.GoodsCategoryBrand
+	if global.DB.Model(&model.GoodsCategoryBrand{}).Where("id = ?", req.Id).Count(&count); count == 0 {
+		return nil, status.Errorf(codes.NotFound, "Category_Brand不存在")
+	}
+
 	categoryBrand.ID = req.Id
 	if req.CategoryId != 0 {
 		if global.DB.Model(&model.Category{}).Where("id = ?", req.CategoryId).Count(&count); count == 0 {
