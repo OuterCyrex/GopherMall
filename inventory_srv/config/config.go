@@ -14,6 +14,7 @@ type ServerConfig struct {
 	Tags   []string     `json:"tags" mapstructure:"tags"`
 	Mysql  MysqlConfig  `json:"mysql" mapstructure:"mysql"`
 	Consul ConsulConfig `json:"consul" mapstructure:"consul"`
+	Redis  RedisConfig  `json:"redis" mapstructure:"redis"`
 }
 
 type ConsulConfig struct {
@@ -27,4 +28,10 @@ type NacosConfig struct {
 	Namespace string `mapstruct:"namespace"`
 	DataId    string `mapstruct:"dataId"`
 	Group     string `mapstruct:"group"`
+}
+
+type RedisConfig struct {
+	Address string `json:"address" mapstructure:"address"`
+	Port    uint64 `json:"port" mapstructure:"port"`
+	DB      int    `json:"db" mapstructure:"db"`
 }

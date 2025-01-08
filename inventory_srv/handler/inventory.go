@@ -4,11 +4,11 @@ import (
 	"GopherMall/inventory_srv/global"
 	"GopherMall/inventory_srv/model"
 	proto "GopherMall/inventory_srv/proto/.InventoryProto"
+	"GopherMall/inventory_srv/utils"
 	"context"
+	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm/clause"
-	"sync"
 )
 
 type InventoryServer struct {
@@ -44,17 +44,19 @@ func (i InventoryServer) InvDetail(ctx context.Context, req *proto.GoodsInvInfo)
 	}, nil
 }
 
-var m sync.Mutex
-
-// Sell 使用了悲观锁
 func (i InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto.Empty, error) {
-	// 上锁
-	m.Lock()
 
 	tx := global.DB.Begin()
 	for _, goodInfo := range req.GoodsInfo {
+
+		mutex := utils.RedisSync.NewMutex(fmt.Sprintf("goods_%d", goodInfo.GoodsId))
+		if err := mutex.Lock(); err != nil {
+			tx.Rollback()
+			return nil, status.Errorf(codes.Internal, "创建Redis互斥锁失败")
+		}
+
 		var inv model.Inventory
-		if result := global.DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
+		if result := global.DB.Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
 			tx.Rollback()
 			return nil, status.Errorf(codes.NotFound, "无效ID")
 		}
@@ -64,33 +66,28 @@ func (i InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto.
 		}
 		inv.Stocks -= goodInfo.Num
 		tx.Save(&inv)
+
+		if ok, err := mutex.Unlock(); !ok || err != nil {
+			tx.Rollback()
+			return nil, status.Errorf(codes.Internal, "解除Redis互斥锁失败")
+		}
 	}
 	tx.Commit()
-
-	// 上锁
-	m.Unlock()
 
 	return &proto.Empty{}, nil
 }
 
-// Reback 使用了乐观锁
 func (i InventoryServer) Reback(ctx context.Context, req *proto.SellInfo) (*proto.Empty, error) {
 
 	tx := global.DB.Begin()
 	for _, goodInfo := range req.GoodsInfo {
 		var inv model.Inventory
-		for {
-			if result := global.DB.Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
-				tx.Rollback()
-				return nil, status.Errorf(codes.NotFound, "无效ID")
-			}
-			if result := tx.Model(&model.Inventory{}).Select("stocks", "version").Where("goods = ? AND version = ?", inv.Goods, inv.Version).Updates(&model.Inventory{
-				Stocks:  inv.Stocks + goodInfo.Num,
-				Version: inv.Version + 1,
-			}); result.RowsAffected != 0 {
-				break
-			}
+		if result := global.DB.Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
+			tx.Rollback()
+			return nil, status.Errorf(codes.NotFound, "无效ID")
 		}
+		inv.Stocks = inv.Stocks + goodInfo.Num
+		tx.Save(&inv)
 	}
 	tx.Commit()
 

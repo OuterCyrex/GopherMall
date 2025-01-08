@@ -18,6 +18,7 @@ func main() {
 	initialize.InitLogger()
 	initialize.InitConfig()
 	initialize.InitMysql()
+	initialize.InitRedis()
 
 	server := grpc.NewServer()
 	proto.RegisterInventoryServer(server, handler.InventoryServer{})
