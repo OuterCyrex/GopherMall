@@ -1,7 +1,7 @@
 package global
 
 import (
-	"GopherMall/goods_srv/config"
+	"GopherMall/inventory_srv/config"
 	"gorm.io/gorm"
 )
 

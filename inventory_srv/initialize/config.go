@@ -1,8 +1,8 @@
 package initialize
 
 import (
-	"GopherMall/goods_srv/config"
-	"GopherMall/goods_srv/global"
+	"GopherMall/inventory_srv/config"
+	"GopherMall/inventory_srv/global"
 	"encoding/json"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -59,7 +59,7 @@ func InitConfig() {
 }
 
 func getNacosConfig() config.NacosConfig {
-	YAMLFile := "goods_srv/config/config.yaml"
+	YAMLFile := "inventory_srv/config/config.yaml"
 	v := viper.New()
 	v.SetConfigFile(YAMLFile)
 	if err := v.ReadInConfig(); err != nil {

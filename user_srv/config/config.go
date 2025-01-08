@@ -10,6 +10,8 @@ type MysqlConfig struct {
 
 type ServerConfig struct {
 	Name   string       `json:"name" mapstructure:"name"`
+	Addr   string       `json:"addr" mapstructure:"addr"`
+	Tags   []string     `json:"tags" mapstructure:"tags"`
 	Mysql  MysqlConfig  `json:"mysql" mapstructure:"mysql"`
 	Consul ConsulConfig `json:"consul" mapstructure:"consul"`
 }

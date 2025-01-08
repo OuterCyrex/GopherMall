@@ -1,11 +1,11 @@
 package main
 
 import (
-	"GopherMall/goods_srv/gateway"
-	"GopherMall/goods_srv/handler"
-	"GopherMall/goods_srv/initialize"
-	proto "GopherMall/goods_srv/proto/.GoodsProto"
-	"GopherMall/goods_srv/utils"
+	"GopherMall/inventory_srv/gateway"
+	"GopherMall/inventory_srv/handler"
+	"GopherMall/inventory_srv/initialize"
+	proto "GopherMall/inventory_srv/proto/.InventoryProto"
+	"GopherMall/inventory_srv/utils"
 	"fmt"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -20,7 +20,7 @@ func main() {
 	initialize.InitMysql()
 
 	server := grpc.NewServer()
-	proto.RegisterGoodsServer(server, handler.GoodsServer{})
+	proto.RegisterInventoryServer(server, handler.InventoryServer{})
 
 	port, err := utils.GetFreePort()
 	if err != nil {

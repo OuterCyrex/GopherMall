@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"GopherMall/goods_srv/global"
+	"GopherMall/inventory_srv/global"
 	"fmt"
 	"github.com/hashicorp/consul/api"
 	uuid "github.com/satori/go.uuid"
@@ -38,8 +38,8 @@ func HealthCheck(grpcAddr string, checkInterval uint) {
 		Name:    global.ServerConfig.Name,
 		ID:      serviceUUID,
 		Port:    port,
-		Tags:    []string{"goods", "grpc", "service"},
-		Address: "127.0.0.1",
+		Tags:    global.ServerConfig.Tags,
+		Address: global.ServerConfig.Addr,
 		Check:   check,
 	})
 
