@@ -1,6 +1,10 @@
 syntax = "proto3";
 option go_package = ".GoodsProto";
 
+package goods;
+
+message Empty{}
+
 service Goods{
   //商品接口
   rpc GoodsList(GoodsFilterRequest) returns(GoodsListResponse);
@@ -38,8 +42,6 @@ service Goods{
   rpc DeleteCategoryBrand(CategoryBrandRequest) returns(Empty); //删除轮播图
   rpc UpdateCategoryBrand(CategoryBrandRequest) returns(Empty); //修改轮播图
 }
-
-message Empty {}
 
 message CategoryListRequest {
   int32 id = 1;
@@ -84,8 +86,6 @@ message SubCategoryListResponse {
   CategoryInfoResponse info = 2;
   repeated CategoryInfoResponse subCategorys = 3;
 }
-
-
 
 message CategoryBrandFilterRequest  {
   int32 pages = 1;

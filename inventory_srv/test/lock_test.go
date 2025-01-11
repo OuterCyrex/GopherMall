@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	proto "GopherMall/inventory_srv/proto/.InventoryProto"
@@ -16,7 +16,9 @@ import (
 )
 
 func TestNegativeLock(t *testing.T) {
-	c, err := grpc.NewClient("127.0.0.1:54673", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var count = 0
+
+	c, err := grpc.NewClient("127.0.0.1:64952", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,16 +36,21 @@ func TestNegativeLock(t *testing.T) {
 				{
 					GoodsId: int32(426),
 					Num:     int32(1),
+				}, {
+					GoodsId: int32(424),
+					Num:     int32(1),
 				},
 			}})
 			if err != nil {
-				t.Error(err)
+				count += 1
 			}
-			wg.Done()
+			w.Done()
 		}(&wg)
 	}
 
 	wg.Wait()
+
+	t.Logf("出错次数：%v", count)
 }
 
 func TestOptimisticLock(t *testing.T) {

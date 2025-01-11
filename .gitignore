@@ -1,5 +1,6 @@
 .idea/
 user_api/dump.rdb
+dump.rdb
 git.sh
 tmp
 sql

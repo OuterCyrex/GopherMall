@@ -1,14 +1,16 @@
 syntax="proto3";
 option go_package = ".InventoryProto";
 
+package inventory;
+
+message Empty{}
+
 service Inventory {
   rpc SetInv(GoodsInvInfo) returns (Empty);
   rpc InvDetail(GoodsInvInfo) returns (GoodsInvInfo);
   rpc Sell(SellInfo) returns (Empty);
   rpc Reback(SellInfo) returns (Empty);
 }
-
-message Empty {}
 
 message GoodsInvInfo {
   int32 goodsId = 1;

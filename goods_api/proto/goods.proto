@@ -1,6 +1,8 @@
 syntax = "proto3";
 option go_package = ".GoodsProto";
 
+package goods;
+
 service Goods{
   //商品接口
   rpc GoodsList(GoodsFilterRequest) returns(GoodsListResponse);

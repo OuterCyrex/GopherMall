@@ -16,8 +16,6 @@ message UserInfoResponse {
   int32 role = 7;
 }
 
-message Empty {}
-
 service User {
   rpc GetUserList(PageInfo) returns (UserListResponse);
   rpc GetUserByMobile(MobileRequest) returns (UserInfoResponse);
@@ -26,6 +24,8 @@ service User {
   rpc UpdateUser(UpdateUserInfo) returns (Empty);
   rpc CheckPasswordInfo (PasswordCheck) returns (CheckResponse);
 }
+
+message Empty{}
 
 message PasswordCheck {
   string password = 1;

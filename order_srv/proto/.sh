@@ -1,0 +1,1 @@
+protoc -I . order.proto --go_out=. --go-grpc_out=.

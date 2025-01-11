@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Inventory_SetInv_FullMethodName    = "/Inventory/SetInv"
-	Inventory_InvDetail_FullMethodName = "/Inventory/InvDetail"
-	Inventory_Sell_FullMethodName      = "/Inventory/Sell"
-	Inventory_Reback_FullMethodName    = "/Inventory/Reback"
+	Inventory_SetInv_FullMethodName    = "/inventory.Inventory/SetInv"
+	Inventory_InvDetail_FullMethodName = "/inventory.Inventory/InvDetail"
+	Inventory_Sell_FullMethodName      = "/inventory.Inventory/Sell"
+	Inventory_Reback_FullMethodName    = "/inventory.Inventory/Reback"
 )
 
 // InventoryClient is the client API for Inventory service.
@@ -210,7 +210,7 @@ func _Inventory_Reback_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Inventory_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Inventory",
+	ServiceName: "inventory.Inventory",
 	HandlerType: (*InventoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

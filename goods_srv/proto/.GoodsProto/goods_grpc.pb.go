@@ -4,7 +4,7 @@
 // - protoc             v5.28.0
 // source: goods.proto
 
-package _GoodsProto
+package __GoodsProto
 
 import (
 	context "context"
@@ -19,30 +19,30 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Goods_GoodsList_FullMethodName            = "/Goods/GoodsList"
-	Goods_BatchGetGoods_FullMethodName        = "/Goods/BatchGetGoods"
-	Goods_CreateGoods_FullMethodName          = "/Goods/CreateGoods"
-	Goods_DeleteGoods_FullMethodName          = "/Goods/DeleteGoods"
-	Goods_UpdateGoods_FullMethodName          = "/Goods/UpdateGoods"
-	Goods_GetGoodsDetail_FullMethodName       = "/Goods/GetGoodsDetail"
-	Goods_GetAllCategorysList_FullMethodName  = "/Goods/GetAllCategorysList"
-	Goods_GetSubCategory_FullMethodName       = "/Goods/GetSubCategory"
-	Goods_CreateCategory_FullMethodName       = "/Goods/CreateCategory"
-	Goods_DeleteCategory_FullMethodName       = "/Goods/DeleteCategory"
-	Goods_UpdateCategory_FullMethodName       = "/Goods/UpdateCategory"
-	Goods_BrandList_FullMethodName            = "/Goods/BrandList"
-	Goods_CreateBrand_FullMethodName          = "/Goods/CreateBrand"
-	Goods_DeleteBrand_FullMethodName          = "/Goods/DeleteBrand"
-	Goods_UpdateBrand_FullMethodName          = "/Goods/UpdateBrand"
-	Goods_BannerList_FullMethodName           = "/Goods/BannerList"
-	Goods_CreateBanner_FullMethodName         = "/Goods/CreateBanner"
-	Goods_DeleteBanner_FullMethodName         = "/Goods/DeleteBanner"
-	Goods_UpdateBanner_FullMethodName         = "/Goods/UpdateBanner"
-	Goods_CategoryBrandList_FullMethodName    = "/Goods/CategoryBrandList"
-	Goods_GetCategoryBrandList_FullMethodName = "/Goods/GetCategoryBrandList"
-	Goods_CreateCategoryBrand_FullMethodName  = "/Goods/CreateCategoryBrand"
-	Goods_DeleteCategoryBrand_FullMethodName  = "/Goods/DeleteCategoryBrand"
-	Goods_UpdateCategoryBrand_FullMethodName  = "/Goods/UpdateCategoryBrand"
+	Goods_GoodsList_FullMethodName            = "/goods.Goods/GoodsList"
+	Goods_BatchGetGoods_FullMethodName        = "/goods.Goods/BatchGetGoods"
+	Goods_CreateGoods_FullMethodName          = "/goods.Goods/CreateGoods"
+	Goods_DeleteGoods_FullMethodName          = "/goods.Goods/DeleteGoods"
+	Goods_UpdateGoods_FullMethodName          = "/goods.Goods/UpdateGoods"
+	Goods_GetGoodsDetail_FullMethodName       = "/goods.Goods/GetGoodsDetail"
+	Goods_GetAllCategorysList_FullMethodName  = "/goods.Goods/GetAllCategorysList"
+	Goods_GetSubCategory_FullMethodName       = "/goods.Goods/GetSubCategory"
+	Goods_CreateCategory_FullMethodName       = "/goods.Goods/CreateCategory"
+	Goods_DeleteCategory_FullMethodName       = "/goods.Goods/DeleteCategory"
+	Goods_UpdateCategory_FullMethodName       = "/goods.Goods/UpdateCategory"
+	Goods_BrandList_FullMethodName            = "/goods.Goods/BrandList"
+	Goods_CreateBrand_FullMethodName          = "/goods.Goods/CreateBrand"
+	Goods_DeleteBrand_FullMethodName          = "/goods.Goods/DeleteBrand"
+	Goods_UpdateBrand_FullMethodName          = "/goods.Goods/UpdateBrand"
+	Goods_BannerList_FullMethodName           = "/goods.Goods/BannerList"
+	Goods_CreateBanner_FullMethodName         = "/goods.Goods/CreateBanner"
+	Goods_DeleteBanner_FullMethodName         = "/goods.Goods/DeleteBanner"
+	Goods_UpdateBanner_FullMethodName         = "/goods.Goods/UpdateBanner"
+	Goods_CategoryBrandList_FullMethodName    = "/goods.Goods/CategoryBrandList"
+	Goods_GetCategoryBrandList_FullMethodName = "/goods.Goods/GetCategoryBrandList"
+	Goods_CreateCategoryBrand_FullMethodName  = "/goods.Goods/CreateCategoryBrand"
+	Goods_DeleteCategoryBrand_FullMethodName  = "/goods.Goods/DeleteCategoryBrand"
+	Goods_UpdateCategoryBrand_FullMethodName  = "/goods.Goods/UpdateCategoryBrand"
 )
 
 // GoodsClient is the client API for Goods service.
@@ -51,7 +51,6 @@ const (
 type GoodsClient interface {
 	// 商品接口
 	GoodsList(ctx context.Context, in *GoodsFilterRequest, opts ...grpc.CallOption) (*GoodsListResponse, error)
-	// 现在用户提交订单有多个商品，你得批量查询商品的信息吧
 	BatchGetGoods(ctx context.Context, in *BatchGoodsIdInfo, opts ...grpc.CallOption) (*GoodsListResponse, error)
 	CreateGoods(ctx context.Context, in *CreateGoodsInfo, opts ...grpc.CallOption) (*GoodsInfoResponse, error)
 	DeleteGoods(ctx context.Context, in *DeleteGoodsInfo, opts ...grpc.CallOption) (*Empty, error)
@@ -905,7 +904,7 @@ func _Goods_UpdateCategoryBrand_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Goods_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Goods",
+	ServiceName: "goods.Goods",
 	HandlerType: (*GoodsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -6,9 +6,13 @@ import (
 	proto "GopherMall/inventory_srv/proto/.InventoryProto"
 	"GopherMall/inventory_srv/utils"
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"sync"
 )
 
 type InventoryServer struct {
@@ -44,7 +48,48 @@ func (i InventoryServer) InvDetail(ctx context.Context, req *proto.GoodsInvInfo)
 	}, nil
 }
 
+var m sync.Mutex
+
 func (i InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto.Empty, error) {
+
+	mutex := utils.RedisSync.NewMutex("goods")
+
+	if err := mutex.Lock(); err != nil {
+		return nil, status.Errorf(codes.Internal, "创建Redis互斥锁失败")
+	}
+
+	tx := global.DB.Begin()
+
+	for _, goodInfo := range req.GoodsInfo {
+
+		var inv model.Inventory
+
+		if result := global.DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where(&model.Inventory{Goods: goodInfo.GoodsId}).First(&inv); result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				tx.Rollback()
+				return nil, status.Errorf(codes.NotFound, "无效ID")
+			}
+			tx.Rollback()
+			return nil, status.Errorf(codes.Internal, "服务器错误")
+		}
+
+		if inv.Stocks < goodInfo.Num {
+			tx.Rollback()
+			return nil, status.Errorf(codes.InvalidArgument, "库存不足")
+		}
+
+		inv.Stocks -= goodInfo.Num
+		tx.Save(&inv)
+
+	}
+	tx.Commit()
+
+	_, _ = mutex.Unlock()
+
+	return &proto.Empty{}, nil
+}
+
+func (i InventoryServer) Reback(ctx context.Context, req *proto.SellInfo) (*proto.Empty, error) {
 
 	tx := global.DB.Begin()
 	for _, goodInfo := range req.GoodsInfo {
@@ -56,38 +101,17 @@ func (i InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto.
 		}
 
 		var inv model.Inventory
-		if result := global.DB.Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
+		if result := global.DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
 			tx.Rollback()
 			return nil, status.Errorf(codes.NotFound, "无效ID")
 		}
-		if inv.Stocks < goodInfo.Num {
-			tx.Rollback()
-			return nil, status.Errorf(codes.InvalidArgument, "库存不足")
-		}
-		inv.Stocks -= goodInfo.Num
+		inv.Stocks = inv.Stocks + goodInfo.Num
 		tx.Save(&inv)
 
 		if ok, err := mutex.Unlock(); !ok || err != nil {
 			tx.Rollback()
 			return nil, status.Errorf(codes.Internal, "解除Redis互斥锁失败")
 		}
-	}
-	tx.Commit()
-
-	return &proto.Empty{}, nil
-}
-
-func (i InventoryServer) Reback(ctx context.Context, req *proto.SellInfo) (*proto.Empty, error) {
-
-	tx := global.DB.Begin()
-	for _, goodInfo := range req.GoodsInfo {
-		var inv model.Inventory
-		if result := global.DB.Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
-			tx.Rollback()
-			return nil, status.Errorf(codes.NotFound, "无效ID")
-		}
-		inv.Stocks = inv.Stocks + goodInfo.Num
-		tx.Save(&inv)
 	}
 	tx.Commit()
 
