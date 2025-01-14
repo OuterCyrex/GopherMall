@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"GopherMall/goods_api/global"
+	"GopherMall/order_api/global"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"go.uber.org/zap"

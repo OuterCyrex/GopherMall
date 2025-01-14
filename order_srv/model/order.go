@@ -8,10 +8,10 @@ type OrderInfo struct {
 	OrderSn string `gorm:"type:varchar(30);index" json:"order_sn"`
 	PayType string `gorm:"type:varchar(20)" json:"pay_type"`
 
-	Status     string    `gorm:"type:varchar(20)" json:"status"`
-	TradeNo    string    `gorm:"type:varchar(100)" json:"trade_no"`
-	OrderMount float32   `gorm:"type:float" json:"order_mount"`
-	PayTime    time.Time `gorm:"type:datetime" json:"pay_time"`
+	Status     string     `gorm:"type:varchar(20)" json:"status"`
+	TradeNo    string     `gorm:"type:varchar(100)" json:"trade_no"`
+	OrderMount float32    `gorm:"type:float" json:"order_mount"`
+	PayTime    *time.Time `gorm:"type:datetime" json:"pay_time"`
 
 	Address      string `json:"address" gorm:"varchar(100)"`
 	SignerName   string `json:"signer_name" gorm:"varchar(20)"`

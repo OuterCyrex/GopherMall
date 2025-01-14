@@ -2,7 +2,6 @@ package utils
 
 import (
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
@@ -17,7 +16,6 @@ func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 					"msg": e.Message(),
 				})
 			case codes.Internal:
-				zap.S().Errorf("InternalServerError: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"msg": "Internal server error",
 				})
@@ -30,16 +28,10 @@ func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 					"msg": "cannot dial rpc serve",
 				})
 			default:
-				zap.S().Errorf("InternalServerError: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"msg": e.Message(),
 				})
 			}
-		} else {
-			zap.S().Errorf("InternalServerError: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"msg": "服务器错误",
-			})
 		}
 	}
 }

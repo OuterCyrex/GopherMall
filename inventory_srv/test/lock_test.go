@@ -102,3 +102,20 @@ func TestRedis(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestSupport(t *testing.T) {
+	c, err := grpc.NewClient("127.0.0.1:57246", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Error(err)
+	}
+	client := proto.NewInventoryClient(c)
+
+	ctx := context.Background()
+
+	for i := 422; i <= 840; i++ {
+		_, _ = client.SetInv(ctx, &proto.GoodsInvInfo{
+			GoodsId: int32(i),
+			Num:     int32(100),
+		})
+	}
+}

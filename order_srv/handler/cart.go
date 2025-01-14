@@ -44,7 +44,7 @@ func (o OrderServer) CreateCartItem(ctx context.Context, req *proto.CartItemRequ
 		return nil, result.Error
 	}
 
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		shopCart.Nums += req.Nums
 	} else {
 		shopCart = model.ShoppingCart{
@@ -68,7 +68,7 @@ func (o OrderServer) CreateCartItem(ctx context.Context, req *proto.CartItemRequ
 func (o OrderServer) UpdateCartItem(ctx context.Context, req *proto.CartItemRequest) (*proto.Empty, error) {
 	var shopCart model.ShoppingCart
 
-	result := global.DB.Where("Id = ?", req.Id).Find(&shopCart)
+	result := global.DB.Where(&model.ShoppingCart{User: req.UserId, Goods: req.GoodsId}).Find(&shopCart)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -77,17 +77,17 @@ func (o OrderServer) UpdateCartItem(ctx context.Context, req *proto.CartItemRequ
 		return nil, status.Errorf(codes.NotFound, "无效ID")
 	}
 
-	var updateMap map[string]interface{}
+	updateMap := map[string]interface{}{}
 
 	if shopCart.Checked != req.Checked {
 		updateMap["checked"] = req.Checked
 	}
 
-	err := global.DB.Updates(model.ShoppingCart{
+	err := global.DB.Where(&model.ShoppingCart{BaseModel: model.BaseModel{ID: shopCart.ID}}).Updates(&model.ShoppingCart{
 		User:  req.UserId,
 		Goods: req.GoodsId,
 		Nums:  req.Nums,
-	}).Updates(updateMap).Where("Id = ?", req.Id).Error
+	}).Updates(updateMap).Error
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (o OrderServer) UpdateCartItem(ctx context.Context, req *proto.CartItemRequ
 }
 
 func (o OrderServer) DeleteCartItem(ctx context.Context, req *proto.CartItemRequest) (*proto.Empty, error) {
-	result := global.DB.Delete(&model.ShoppingCart{}, req.Id)
+	result := global.DB.Where(&model.ShoppingCart{User: req.UserId, Goods: req.GoodsId}).Delete(&model.ShoppingCart{})
 	if result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.NotFound, "无效ID")
 	}

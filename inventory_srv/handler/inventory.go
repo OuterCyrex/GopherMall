@@ -39,7 +39,7 @@ func (i InventoryServer) InvDetail(ctx context.Context, req *proto.GoodsInvInfo)
 	result := global.DB.Where("goods = ?", req.GoodsId).Find(&inv)
 
 	if result.RowsAffected == 0 {
-		return nil, status.Errorf(codes.NotFound, "无效ID")
+		return nil, status.Errorf(codes.NotFound, "无效库存ID")
 	}
 
 	return &proto.GoodsInvInfo{
@@ -67,7 +67,7 @@ func (i InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto.
 		if result := global.DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where(&model.Inventory{Goods: goodInfo.GoodsId}).First(&inv); result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				tx.Rollback()
-				return nil, status.Errorf(codes.NotFound, "无效ID")
+				return nil, status.Errorf(codes.NotFound, "无效库存ID")
 			}
 			tx.Rollback()
 			return nil, status.Errorf(codes.Internal, "服务器错误")
@@ -103,7 +103,7 @@ func (i InventoryServer) Reback(ctx context.Context, req *proto.SellInfo) (*prot
 		var inv model.Inventory
 		if result := global.DB.Clauses(clause.Locking{Strength: "UPDATE"}).Where(&model.Inventory{Goods: goodInfo.GoodsId}).Find(&inv); result.RowsAffected == 0 {
 			tx.Rollback()
-			return nil, status.Errorf(codes.NotFound, "无效ID")
+			return nil, status.Errorf(codes.NotFound, "无效库存ID")
 		}
 		inv.Stocks = inv.Stocks + goodInfo.Num
 		tx.Save(&inv)

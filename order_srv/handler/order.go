@@ -7,8 +7,11 @@ import (
 	"GopherMall/order_srv/model"
 	proto "GopherMall/order_srv/proto/.OrderProto"
 	"context"
+	"fmt"
+	"github.com/duke-git/lancet/v2/random"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"time"
 )
 
 type OrderServer struct {
@@ -22,7 +25,7 @@ func (o OrderServer) CreateOrder(ctx context.Context, req *proto.OrderRequest) (
 
 	result := global.DB.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Find(&shopCarts)
 	if result.RowsAffected == 0 {
-		return nil, status.Errorf(codes.NotFound, "订单不存在")
+		return nil, status.Errorf(codes.NotFound, "购物车单不存在")
 	}
 
 	for _, shop := range shopCarts {
@@ -59,9 +62,52 @@ func (o OrderServer) CreateOrder(ctx context.Context, req *proto.OrderRequest) (
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	// TODO
+	order := model.OrderInfo{
+		User:         req.UserId,
+		OrderSn:      generateOrderSn(req.UserId),
+		OrderMount:   amount,
+		Address:      req.Address,
+		SignerName:   req.Name,
+		SignerMobile: req.Mobile,
+		Post:         req.Post,
+	}
 
-	return nil, nil
+	tx := global.DB.Begin()
+
+	err = tx.Save(&order).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	for _, goods := range orderGoods {
+		goods.Order = order.ID
+	}
+
+	err = tx.CreateInBatches(orderGoods, 100).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	err = tx.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Delete(&model.ShoppingCart{}).Error
+	if err != nil {
+		tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	tx.Commit()
+
+	return &proto.OrderInfoResponse{
+		Id:      order.ID,
+		UserId:  order.User,
+		OrderSn: order.OrderSn,
+		Post:    order.Post,
+		Total:   order.OrderMount,
+		Address: order.Address,
+		Name:    order.SignerName,
+		Mobile:  order.SignerMobile,
+	}, nil
 }
 
 func (o OrderServer) OrderList(ctx context.Context, req *proto.OrderFilterRequest) (*proto.OrderListResponse, error) {
@@ -143,5 +189,27 @@ func (o OrderServer) OrderDetail(ctx context.Context, req *proto.OrderRequest) (
 }
 
 func (o OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.OrderStatus) (*proto.Empty, error) {
-	return nil, nil
+	result := global.DB.Model(&model.OrderInfo{}).Where(&model.OrderInfo{OrderSn: req.OrderSn}).Update("status", req.Status)
+	if result.Error != nil {
+		return nil, status.Errorf(codes.Internal, result.Error.Error())
+	}
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "无效订单号")
+	}
+
+	return &proto.Empty{}, nil
+}
+
+func generateOrderSn(userId int32) string {
+	now := time.Now()
+	return fmt.Sprintf("%d%d%d%d%d%d%d%d",
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		now.Hour(),
+		now.Minute(),
+		now.Nanosecond(),
+		userId,
+		random.RandInt(10, 99),
+	)
 }
