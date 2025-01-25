@@ -1,0 +1,40 @@
+syntax = "proto3";
+option go_package = ".AddressProto";
+
+package address;
+
+message Empty {}
+
+service Address {
+  rpc GetAddressList (AddressRequest) returns (AddressListResponse);
+  rpc CreateAddress (AddressRequest) returns (AddressResponse);
+  rpc DeleteAddress (AddressRequest) returns (Empty);
+  rpc UpdateAddress (AddressRequest) returns (Empty);
+}
+
+message AddressRequest {
+  int32 id = 1;
+  int32 userId = 2;
+  string province = 3;
+  string city = 4;
+  string district = 5;
+  string address = 6;
+  string SignerName = 7;
+  string SignerMobile = 8;
+}
+
+message AddressResponse {
+  int32 id = 1;
+  int32 userId = 2;
+  string province = 3;
+  string city = 4;
+  string district = 5;
+  string address = 6;
+  string SignerName = 7;
+  string SignerMobile = 8;
+}
+
+message AddressListResponse {
+  int32 total = 1;
+  repeated AddressResponse data = 2;
+}

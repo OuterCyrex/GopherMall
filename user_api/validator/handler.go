@@ -15,6 +15,7 @@ func HandleValidatorError(err error, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "系统内部错误",
 		})
+		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{
 		"error": removeTopStruct(errs.Translate(global.Trans)),
