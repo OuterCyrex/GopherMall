@@ -1,0 +1,28 @@
+syntax = "proto3";
+option go_package = ".FavProto";
+
+package fav;
+
+message Empty {}
+
+service Fav {
+  rpc GetFavList (UserFavRequest) returns (UserFavListResponse);
+  rpc AddUserFav (UserFavRequest) returns (Empty);
+  rpc DeleteUserFav (UserFavRequest) returns (Empty);
+  rpc GetUserFavDetail (UserFavRequest) returns (Empty);
+}
+
+message UserFavRequest {
+  int32 userId = 1;
+  int32 goodsId = 2;
+}
+
+message UserFavResponse {
+  int32 userId = 1;
+  int32 goodsId = 2;
+}
+
+message UserFavListResponse {
+  int32 total = 1;
+  repeated UserFavResponse data = 2;
+}
