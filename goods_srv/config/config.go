@@ -9,11 +9,12 @@ type MysqlConfig struct {
 }
 
 type ServerConfig struct {
-	Name   string       `json:"name" mapstructure:"name"`
-	Addr   string       `json:"addr" mapstructure:"addr"`
-	Tags   []string     `json:"tags" mapstructure:"tags"`
-	Mysql  MysqlConfig  `json:"mysql" mapstructure:"mysql"`
-	Consul ConsulConfig `json:"consul" mapstructure:"consul"`
+	Name    string       `json:"name" mapstructure:"name"`
+	Addr    string       `json:"addr" mapstructure:"addr"`
+	Tags    []string     `json:"tags" mapstructure:"tags"`
+	Mysql   MysqlConfig  `json:"mysql" mapstructure:"mysql"`
+	Consul  ConsulConfig `json:"consul" mapstructure:"consul"`
+	Elastic EsConfig     `json:"elastic" mapstructure:"elastic"`
 }
 
 type ConsulConfig struct {
@@ -22,9 +23,16 @@ type ConsulConfig struct {
 }
 
 type NacosConfig struct {
-	Host      string `mapstruct:"host"`
-	Port      uint64 `mapstruct:"port"`
-	Namespace string `mapstruct:"namespace"`
-	DataId    string `mapstruct:"dataId"`
-	Group     string `mapstruct:"group"`
+	Host      string `mapstructure:"host"`
+	Port      uint64 `mapstructure:"port"`
+	Namespace string `mapstructure:"namespace"`
+	DataId    string `mapstructure:"dataId"`
+	Group     string `mapstructure:"group"`
+}
+
+type EsConfig struct {
+	Host     string `json:"host" mapstructure:"host"`
+	Port     int    `json:"port" mapstructure:"port"`
+	UserName string `json:"username" mapstructure:"username"`
+	Password string `json:"password" mapstructure:"password"`
 }

@@ -5,7 +5,9 @@ import (
 	"GopherMall/goods_srv/model"
 	proto "GopherMall/goods_srv/proto/.GoodsProto"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/olivere/elastic/v7"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -19,35 +21,37 @@ func (g GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReques
 		return nil, status.Errorf(codes.InvalidArgument, "最低价格大于最高价格")
 	}
 
-	tx := global.DB.Model(&model.Goods{})
+	q := elastic.NewBoolQuery()
 
 	if req.KeyWords != "" {
-		tx = tx.Where("name LIKE ?", "%"+req.KeyWords+"%")
+		q = q.Must(elastic.NewMultiMatchQuery(req.KeyWords, "name", "goods_brief"))
 	}
 
 	if req.IsHot {
-		tx = tx.Where("is_hot = ?", req.IsHot)
+		q = q.Filter(elastic.NewTermsQuery("is_hot", req.IsHot))
 	}
 
 	if req.IsNew {
-		tx = tx.Where("is_new = ?", req.IsNew)
+		q = q.Filter(elastic.NewTermsQuery("is_new", req.IsNew))
 	}
 
 	if req.IsTab {
-		tx = tx.Where("is_tab = ?", req.IsTab)
+		q = q.Filter(elastic.NewTermsQuery("is_tab", req.IsTab))
 	}
 
 	if req.PriceMin > 0 {
-		tx = tx.Where("shop_price >= ?", req.PriceMin)
+		q = q.Filter(elastic.NewRangeQuery("shop_price").Gte(req.PriceMin))
 	}
 
 	if req.PriceMax > 0 {
-		tx = tx.Where("shop_price <= ?", req.PriceMax)
+		q = q.Filter(elastic.NewRangeQuery("shop_price").Lte(req.PriceMax))
 	}
 
 	if req.Brand > 0 {
-		tx = tx.Where("brands_id = ?", req.Brand)
+		q = q.Filter(elastic.NewTermsQuery("brands_id", req.Brand))
 	}
+
+	categoryIds := make([]interface{}, 0)
 
 	if req.TopCategory > 0 {
 		var category model.Category
@@ -69,26 +73,73 @@ func (g GoodsServer) GoodsList(ctx context.Context, req *proto.GoodsFilterReques
 			return nil, status.Errorf(codes.InvalidArgument, "Level值无效")
 		}
 
-		tx = tx.Where(fmt.Sprintf("category_id IN (%s)", subQuery))
+		type Result struct {
+			ID int32
+		}
+
+		var results []Result
+
+		global.DB.Model(&model.Category{}).Raw(subQuery).Scan(&results)
+
+		for _, re := range results {
+			categoryIds = append(categoryIds, re.ID)
+		}
+
+		q = q.Filter(elastic.NewTermsQuery("category_id", categoryIds...))
 	}
 
-	var count int64
-	tx.Count(&count)
+	if req.Pages >= 1 {
+		req.Pages -= 1
+	}
 
-	var goods []model.Goods
-	result := tx.Preload("Category").Preload("Brands").Scopes(Paginate(int(req.Pages), int(req.PagePerNums))).Find(&goods)
-	if result.Error != nil {
-		return nil, result.Error
+	switch {
+	case req.PagePerNums > 100:
+		req.PagePerNums = 100
+	case req.PagePerNums < 10:
+		req.PagePerNums = 10
+	}
+
+	resp, err := global.Elastic.Search().Index(model.EsGoods{}.GetIndexName()).
+		Query(q).
+		From(int(req.Pages)).
+		Size(int(req.PagePerNums)).
+		Do(context.Background())
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	goodsIds := make([]int32, 0)
+
+	for _, g := range resp.Hits.Hits {
+		goods := model.EsGoods{}
+		_ = json.Unmarshal(g.Source, &goods)
+		goodsIds = append(goodsIds, goods.ID)
+	}
+
+	if len(goodsIds) == 0 {
+		return &proto.GoodsListResponse{
+			Total: int32(resp.Hits.TotalHits.Value),
+			Data:  nil,
+		}, nil
 	}
 
 	var respList []*proto.GoodsInfoResponse
 
-	for _, good := range goods {
-		respList = append(respList, ModelToGoods(good))
+	var goods []model.Goods
+
+	result := global.DB.Model(&model.Goods{}).Preload("Category").Preload("Brands").Find(&goods, goodsIds)
+
+	if result.Error != nil {
+		return nil, status.Errorf(codes.Internal, result.Error.Error())
+	}
+
+	for _, g := range goods {
+		respList = append(respList, ModelToGoods(g))
 	}
 
 	return &proto.GoodsListResponse{
-		Total: int32(count),
+		Total: int32(resp.Hits.TotalHits.Value),
 		Data:  respList,
 	}, nil
 }
@@ -140,9 +191,15 @@ func (g GoodsServer) CreateGoods(ctx context.Context, req *proto.CreateGoodsInfo
 		GoodsFrontImage: req.GoodsFrontImage,
 	}
 
-	if err := global.DB.Save(&good).Error; err != nil {
-		return nil, err
+	tx := global.DB.Begin()
+
+	result = tx.Save(&good)
+	if result.Error != nil {
+		tx.Rollback()
+		return nil, status.Errorf(codes.Internal, result.Error.Error())
 	}
+
+	tx.Commit()
 
 	return &proto.GoodsInfoResponse{
 		Id: good.ID,
@@ -150,11 +207,19 @@ func (g GoodsServer) CreateGoods(ctx context.Context, req *proto.CreateGoodsInfo
 }
 
 func (g GoodsServer) DeleteGoods(ctx context.Context, req *proto.DeleteGoodsInfo) (*proto.Empty, error) {
-	result := global.DB.Where("Id = ?", req.Id).Delete(&model.Goods{})
+	tx := global.DB.Begin()
+
+	result := tx.Model(&model.Goods{}).Delete(&model.Goods{BaseModel: model.BaseModel{ID: req.Id}})
 
 	if result.RowsAffected == 0 {
 		return nil, status.Errorf(codes.NotFound, "无效ID")
 	}
+
+	if result.Error != nil {
+		return nil, status.Errorf(codes.Internal, result.Error.Error())
+	}
+
+	tx.Commit()
 
 	return &proto.Empty{}, nil
 }
@@ -219,10 +284,15 @@ func (g GoodsServer) UpdateGoods(ctx context.Context, req *proto.CreateGoodsInfo
 		goodsMap["on_sale"] = req.OnSale
 	}
 
-	result := global.DB.Updates(&goods).Updates(goodsMap)
+	tx := global.DB.Begin()
+
+	result := tx.Updates(&goods).Updates(goodsMap)
 	if result.Error != nil {
-		return nil, result.Error
+		tx.Rollback()
+		return nil, status.Errorf(codes.Internal, result.Error.Error())
 	}
+
+	tx.Commit()
 
 	return &proto.Empty{}, nil
 }

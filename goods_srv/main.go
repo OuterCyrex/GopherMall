@@ -18,6 +18,7 @@ func main() {
 	initialize.InitLogger()
 	initialize.InitConfig()
 	initialize.InitMysql()
+	initialize.InitElastic()
 
 	server := grpc.NewServer()
 	proto.RegisterGoodsServer(server, handler.GoodsServer{})
